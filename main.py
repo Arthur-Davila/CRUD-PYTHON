@@ -2,6 +2,7 @@ import os
 os.system('cls')
 import tkinter as tk
 from tkcalendar import Calendar
+from tkinter import ttk
 
 # Lista de eventos
 eventList = []
@@ -35,7 +36,31 @@ label1 = tk.Label(window, text="FazAí", bg="#FFFFFF", fg='black', font=("Arial"
 label1.grid(row=0, column=0, columnspan=2, pady=20)
 
 # --- Calendário ---
-cal = Calendar(window, selectmode='day', year=2025, month=10, day=28, locale='pt_BR')
+cal = Calendar(
+    window,
+    selectmode="day",
+    year=2025,
+    month=11,
+    day=4,
+    date_pattern="dd/mm/yyyy",
+    background="#000000",      # Fundo geral
+    disabledbackground="#A9A9A9",
+    bordercolor="#000000",
+    headersbackground="#FFFFFF",   # Cabeçalho com destaque
+    headersforeground="#000000",
+    normalbackground="#FFFFFF",
+    normalforeground="#000000",
+    weekendbackground="#000000",  # Fim de semana levemente diferente
+    weekendforeground="#FFFFFF",
+    othermonthbackground="#A9A9A9",
+    othermonthwebackground="#696969",
+    othermonthforeground="#D3D3D3",
+    othermonthweforeground="#A9A9A9",
+    selectbackground="#2E2E2E",   # Cor da seleção — rosa glam
+    selectforeground="#FFFFFF",
+    font=("Helvetica", 11, "bold"),
+    cursor="hand1",
+    style="my.TCalendar")
 cal.grid(row=1, column=0, padx=20, pady=10, sticky="n")
 
 btn_data = tk.Button(window, text="Selecionar Data", command=showDate, font=("Arial", 12))
@@ -43,6 +68,20 @@ btn_data.grid(row=2, column=0, pady=5)
 
 label_data = tk.Label(window, text="", bg="#FFFFFF", font=("Arial", 14))
 label_data.grid(row=3, column=0, pady=5)
+
+#estilizando o Calendário
+style = ttk.Style(window)
+style.theme_use("clam")
+
+style.configure("my.TCalendar",
+                background="#282A36",  # Fundo principal
+                foreground="#F8F8F2",  # Texto principal
+                fieldbackground="#282A36",
+                bordercolor="#44475A",
+                lightcolor="#44475A",
+                darkcolor="#44475A",
+                arrowcolor="#BD93F9")  # Roxo sutil nas setas
+
 
 # --- FRAME: Painel de Eventos ---
 frame_eventos = tk.Frame(window, bg="#F8F8F8", bd=3, relief="groove", padx=20, pady=20)
