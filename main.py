@@ -18,9 +18,10 @@ window.columnconfigure(1, weight=1)
 
 # Função para exibir data selecionada
 def showDate():
+    btn_data.config(state="disabled")
     selectedDate = cal.get_date()
     dataList.append(selectedDate)
-    lista_datas.insert(tk.ACTIVE, selectedDate)
+    lista_datas.insert(tk.END, selectedDate)
     label_data.config(text=f"Data selecionada: {selectedDate}")
 
 # Função para registrar evento
@@ -31,8 +32,6 @@ def registrar_nome():
         eventList.append(nome)
         lista_eventos.insert(tk.END, nome)
         eventName.delete(0, tk.END)
-    else:
-        btn_data.config(state="disabled")
     
 
 # --- Título ---
