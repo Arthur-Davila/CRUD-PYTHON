@@ -20,19 +20,20 @@ window.columnconfigure(1, weight=1)
 def showDate():
     selectedDate = cal.get_date()
     dataList.append(selectedDate)
-    lista_datas.insert(tk.END, selectedDate)
+    lista_datas.insert(tk.ACTIVE, selectedDate)
     label_data.config(text=f"Data selecionada: {selectedDate}")
 
 # Função para registrar evento
 def registrar_nome():
-    nome = eventName.get().strip()
+    nome = eventName.get().strip()   
     if nome:
+        btn_data.config(state="normal")
         eventList.append(nome)
         lista_eventos.insert(tk.END, nome)
         eventName.delete(0, tk.END)
-        print("Evento registrado:", nome)
     else:
-        print("Digite um nome antes de registrar.")
+        btn_data.config(state="disabled")
+    
 
 # --- Título ---
 label1 = tk.Label(window, text="FazAí", bg="#FFFFFF", fg='black', font=("Arial", 48))
@@ -72,9 +73,6 @@ btn_data.grid(row=2, column=0, pady=5)
 label_data = tk.Label(window, text="", bg="#FFFFFF", font=("Arial", 14))
 label_data.grid(row=3, column=0, pady=5)
 
-lista_datas = tk.Listbox(window, width=40, height=10, font=("Arial", 14))
-lista_datas.grid(row=4, column=0, pady=1)
-
 #estilizando o Calendário
 style = ttk.Style(window)
 style.theme_use("clam")
@@ -100,14 +98,17 @@ label2.grid(row=0, column=0, sticky="w", pady=(0,10))
 eventName = tk.Entry(frame_eventos, fg='black', font=("Arial", 18), width=25)
 eventName.grid(row=1, column=0, pady=5)
 
-botao = tk.Button(frame_eventos, text="Registrar", width=20, height=2, font=("Arial", 14), command=(registrar_nome, showDate))
+botao = tk.Button(frame_eventos, text="Registrar", width=20, height=2, font=("Arial", 14), command= registrar_nome)
 botao.grid(row=2, column=0, pady=15)
 
 label3 = tk.Label(frame_eventos, text="Eventos Registrados:", bg="#F8F8F8", fg='black', font=("Arial", 18, "bold"))
 label3.grid(row=3, column=0, pady=(10,5))
 
-lista_eventos = tk.Listbox(frame_eventos, width=40, height=10, font=("Arial", 14))
-lista_eventos.grid(row=4, column=0, pady=5)
+lista_eventos = tk.Listbox(frame_eventos, width=20, height=10, font=("Arial", 14))
+lista_eventos.grid(row=4, column=0, pady=5, sticky="w")
+
+lista_datas = tk.Listbox(frame_eventos, width=20, height=10, font=("Arial", 14))
+lista_datas.grid(row=4, column=1, padx=0)
 
 # --- Rodapé ---
 assinatura = tk.Label(window, text="Design assinado por Gus <3", bg="#FFFFFF", fg="#777777", font=("Arial", 10))
