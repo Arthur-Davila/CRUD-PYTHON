@@ -37,6 +37,8 @@ def showDate():
     lista_datas.insert(tk.END, selectedDate)
     label_data.config(text=f"Data selecionada: {selectedDate}")
     botao.config(state="normal")
+    
+
 
 
 # --- Título ---
@@ -107,7 +109,7 @@ botao = tk.Button(frame_eventos, text="Registrar", width=20, height=2, font=("Ar
 botao.grid(row=2, column=0, pady=15)
 
 edit_btn = tk.Button(frame_eventos, text="Editar", width=10, height=1, font=("Arial", 14))
-edit_btn.grid(row=2, column=1)
+edit_btn.grid(row=2, column=1) #Programar para aparecer na mesma linha que os termos da lista
 
 label3 = tk.Label(frame_eventos, text="Eventos Registrados:", bg="#F8F8F8", fg='black', font=("Arial", 18, "bold"))
 label3.grid(row=3, column=0, pady=(10,5))
