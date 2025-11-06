@@ -26,13 +26,12 @@ def showDate():
 
 # Função para registrar evento
 def registrar_nome():
-    nome = eventName.get().strip()   
+    nome = eventName.get().strip()
     if nome:
         btn_data.config(state="normal")
         eventList.append(nome)
         lista_eventos.insert(tk.END, nome)
         eventName.delete(0, tk.END)
-    
 
 # --- Título ---
 label1 = tk.Label(window, text="FazAí", bg="#FFFFFF", fg='black', font=("Arial", 48))
