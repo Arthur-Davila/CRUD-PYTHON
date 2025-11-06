@@ -99,6 +99,9 @@ eventName.grid(row=1, column=0, pady=5)
 botao = tk.Button(frame_eventos, text="Registrar", width=20, height=2, font=("Arial", 14), command= registrar_nome)
 botao.grid(row=2, column=0, pady=15)
 
+edit_btn = tk.Button(frame_eventos, text="Editar", width=20, height=2, font=("Arial", 14))
+edit_btn.grid(row=2, column=1)
+
 label3 = tk.Label(frame_eventos, text="Eventos Registrados:", bg="#F8F8F8", fg='black', font=("Arial", 18, "bold"))
 label3.grid(row=3, column=0, pady=(10,5))
 
