@@ -42,3 +42,20 @@ while(cont != "n"):
     cont = input("\nDeseja continuar a operação? [s / n] ")
 
 print(eventos)
+
+#---Editor de funções (main) dos botões do aplicativo---
+
+def registrar_nome():
+    nome = eventName.get().strip()
+    if nome:
+        eventList.append(nome)
+        lista_eventos.insert(tk.END, nome)
+        eventName.delete(0, tk.END)
+        print("Evento registrado:", nome)
+    else:
+        print("Digite um nome antes de registrar.")
+
+botao = tk.Button(frame_eventos, text="Registrar", width=20, height=2, font=("Arial", 14), command=registrar_nome)
+botao.grid(row=2, column=0, pady=15)
+
+
