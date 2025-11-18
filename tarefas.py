@@ -1,34 +1,28 @@
-# A lista principal que vai guardar os pares de itens
 lista_tarefas = []
-#função de add tarefas:
-def adicionar_tarefa():
-    print("\n--- Adicionar Par ---")
-    trf = input("Digite a tarefa a ser adicionada: ")
-    vlr = input("Digite custo dessa tarefa: ")
-    par = (trf, vlr)
 
-    lista_tarefas.append(par)
-    
-    print(f"Tarefa {par} para o evento foi adicionado com sucesso!")
+def add():
+    print("\n--- Adicionar Tarefa ---")
+    tarefa = input("Digite a tarefa: ")
+    valor = input("Digite o valor da tarefa: ")
+    nova_tarefa = {"Tarefa": tarefa, "Valor": valor}
+    lista_tarefas.append(nova_tarefa)
 
 
-
-#função de remover a tarefa:
-def remover_tarefa():
-    
-    print("\n--- Remover Item ---")
+def remover():
+    print("\n-Remover Tarefa")
     if not lista_tarefas:
-        print("A lista está vazia. Nada para remover.")
+        print("A lista está vazia, nada para remover.")
         return
-
-    item_remover = input("Digite o item que você quer remover: ")
     
-    nova_lista = [par for par in lista_tarefas if item_remover not in par]
+    remover_tarefa = input("Digite a tarefa que você quer remover: ")
+    encontrada = False
+
+    for i in range(len(lista_tarefas)):
+        if lista_tarefas[i]["Tarefa"] == remover_tarefa:
+            del lista_tarefas[i]
+            print(f"Tarefa '{remover_tarefa}' foi removida.")
+            encontrada = True
+            break
     
-    if len(nova_lista) < len(lista_tarefas):
-
-        lista_tarefas = nova_lista
-        print(f"A tarefa '{item_remover}' foi removida.")
-    else:
-        print(f"Item '{item_remover}' não foi adicionado anteriormente.")
-
+    if not encontrada:
+        print(f"Tarefa '{remover_tarefa}' não encontrada.")
