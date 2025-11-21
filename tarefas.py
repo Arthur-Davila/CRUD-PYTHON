@@ -70,3 +70,31 @@ def edite():
 
     if not encontrada:
         print(f"Tarefa '{tarefa_editar}' não encontrada.")
+
+
+
+while True:
+    print("\n-----------------------")
+    print(" MENU DE TAREFAS")
+    print("-----------------------")
+    print("1. Adicionar Tarefa")
+    print("2. Ver Tarefas")
+    print("3. Editar Tarefa")
+    print("4. Remover Tarefa")
+    print("5. Sair")
+
+    escolha = input("Digite sua escolha (1-5): ")
+
+    if escolha == "1":
+        add()
+    elif escolha == "2":
+        ver()
+    elif escolha == "3":
+        edite()
+    elif escolha == "4":
+        remover()
+    elif escolha == "5":
+        print("Saindo...")
+        break
+    else:
+        print("Opção inválida. Tente novamente.")
