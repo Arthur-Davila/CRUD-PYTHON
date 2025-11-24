@@ -2,21 +2,26 @@ import os
 os.system('cls')
 import datetime
 from datetime import datetime
-file=open("eventos.txt","w","encoding='utf-8'")
+arquivo = open("eventos.txt","w",encoding='utf-8')
 eventos=[]
 datas=[]
 name=input("digite o nome do evento:")
-date=(int(input("digite o dia do evento: aa/mm/dd")))
-tarefas=input("digite as tarefas do evento:")
 eventos.append(name)
+date =int(input("digite o dia do evento aa/mm/dd: "))
 datas.append(date)
+data_obj=datetime.strptime(str(date),"%d/%m/%y)" )
 a=len(eventos)
+
+arquivo.write(f"---Eventos  e Datas---\n {eventos}\t\t\t\t{datas}\n")
 for i in range(a):
     restante=datas[i]-datetime.today(()).days
     
     if restante<0:
-        file.write(f'O evento {eventos[i]} já ocorreiu na data {datas[i]}\n')
+        arquivo.write(f'O evento {eventos[i]} já ocorreu na data {datas[i]} \n')
+    elif restante==0:
+        arquivo.write(f"O evento {eventos[i]} acontecerá na data de hoje {datas[i]} \n")
     else:
-        file.write(f"Faltam{restante}dias para o evento{eventos[i]} que ocorrera na data{datas[i]}\n")
+        arquivo.write(f"Faltam {restante} dias para o evento {eventos[i]} que ocorrera na data {datas[i]} \n")
 
-file.close()
+arquivo.close()
+
