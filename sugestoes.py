@@ -13,11 +13,10 @@ datas.append(date)
 a=len(eventos)
 for i in range(a):
     restante=datas[i]-datetime.today(()).days
-    file.write(f"Faltam{restante}dias para o evento{eventos[i]} que ocorrera na data{datas[i]}\n")
     
+    if restante<0:
+        file.write(f'O evento {eventos[i]} já ocorreiu na data {datas[i]}\n')
+    else:
+        file.write(f"Faltam{restante}dias para o evento{eventos[i]} que ocorrera na data{datas[i]}\n")
 
-
-
-
-
-
+file.close()
