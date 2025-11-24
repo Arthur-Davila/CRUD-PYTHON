@@ -1,5 +1,5 @@
 lista_tarefas = []
-
+tarefas= open("tarefass.txt","w", encoding='utf-8')
 def add():
     print("\n--- Adicionar Tarefa ---")
     tarefa = input("Digite a tarefa: ")
@@ -98,3 +98,6 @@ while True:
         break
     else:
         print("Opção inválida. Tente novamente.")
+tarefas.write(f"tarefas dos eventos:\n {lista_tarefas} ")
+
+tarefas.close()
