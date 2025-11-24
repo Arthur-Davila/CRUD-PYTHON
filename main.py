@@ -4,73 +4,107 @@ import tkinter as tk
 from tkcalendar import Calendar
 from tkinter import ttk
 
-# Lista de eventos
-eventList = []
-dataList = []
+# --- ESTRUTURA DE DADOS UNIFICADA ---
+records = [] # Lista principal que armazena dicionários: [{'id': 1, 'nome': '...', 'data': '...'}]
+next_id = 1 
+# --- FIM ESTRUTURA DE DADOS UNIFICADA ---
 
-# Configuração da Janela
+# Configuração da Janela (Permanece a mesma)
 window = tk.Tk()
 window.configure(bg="#FFFFFF")
-window.title("FazAí")
+window.title("FazAí - Agenda")
 window.geometry("1280x720")
 window.columnconfigure(0, weight=1)
 window.columnconfigure(1, weight=1)
 
-# Função para exibir data selecionada
+# Variável para armazenar o nome temporariamente
+window.temp_event_name = None 
 
+# --- FUNÇÕES CORE (CREATE / READ) ---
 
-# Função para registrar evento
+def update_event_treeview():
+    """Limpa e preenche o Treeview com os dados de 'records'."""
+    # 1. Limpar registros existentes
+    for iid in tree.get_children():
+        tree.delete(iid)
+    
+    # 2. Inserir os novos registros
+    for record in records:
+        # A ordem deve ser: 'id', 'nome', 'data', 'ações'
+        tree.insert('', tk.END, values=(record['id'], record['nome'], record['data'], ''))
 
 def registrar_nome():
+    """Valida o nome do evento e libera a seleção da data."""
+    global window
     nome = eventName.get().strip()
     if nome:
+        window.temp_event_name = nome # Armazena o nome
         btn_data.config(state="normal")
-        eventList.append(nome)
-        lista_eventos.insert(tk.END, nome)
-        eventName.delete(0, tk.END)
-        botao.config(state="disabled")
+        botao.config(state="disabled") # Desativa o Registrar até a data ser escolhida
+    # Não há necessidade de 'eventList.append(nome)' nem 'lista_eventos.insert()' aqui.
 
 def showDate():
+    """Registra o evento completo (Nome + Data) e atualiza o Treeview."""
+    global next_id, window
+    
+    if window.temp_event_name is None:
+        # Garante que o nome foi registrado antes
+        return 
+
     btn_data.config(state="disabled")
     selectedDate = cal.get_date()
-    dataList.append(selectedDate)
-    lista_datas.insert(tk.END, selectedDate)
-    label_data.config(text=f"Data selecionada: {selectedDate}")
-    botao.config(state="normal")
     
+    # Cria o novo registro unificado
+    new_record = {
+        'id': next_id,
+        'nome': window.temp_event_name,
+        'data': selectedDate
+    }
+    records.append(new_record)
+    next_id += 1
+    
+    # Atualiza a interface
+    eventName.delete(0, tk.END)
+    update_event_treeview() # Chama a função de preenchimento do Treeview
+    
+    label_data.config(text=f"Data selecionada: {selectedDate}")
+    window.temp_event_name = None # Limpa o nome temporário
+    botao.config(state="normal")
+
+# --- FUNÇÕES DE ESTILOS (Para o design da tabela) ---
+
+style = ttk.Style(window)
+style.theme_use("clam")
+
+# Configuração de Estilos para o Calendário (mantido)
+style.configure("my.TCalendar",
+                background="#282A36", 
+                foreground="#F8F8F2", 
+                fieldbackground="#282A36",
+                bordercolor="#44475A",
+                lightcolor="#44475A",
+                darkcolor="#44475A",
+                arrowcolor="#BD93F9")
+
+# Configuração de Estilos para o Treeview
+style.configure("Treeview.Heading", 
+                font=("Arial", 10, "bold"),
+                background="#F0F0F0") 
+style.configure("Treeview",
+                rowheight=25,
+                fieldbackground='#FFFFFF') 
 
 
-
-# --- Título ---
+# --- Título, Calendário e Botões de Data (Mantidos) ---
 label1 = tk.Label(window, text="FazAí", bg="#FFFFFF", fg='black', font=("Arial", 48))
 label1.grid(row=0, column=0, columnspan=2, pady=20)
 
-# --- Calendário ---
-cal = Calendar(
-    window,
-    selectmode="day",
-    year=2025,
-    month=11,
-    day=4,
-    date_pattern="dd/mm/yyyy",
-    background="#000000",      # Fundo geral
-    disabledbackground="#A9A9A9",
-    bordercolor="#000000",
-    headersbackground="#FFFFFF",   # Cabeçalho com destaque
-    headersforeground="#000000",
-    normalbackground="#FFFFFF",
-    normalforeground="#000000",
-    weekendbackground="#000000",  # Fim de semana levemente diferente
-    weekendforeground="#FFFFFF",
-    othermonthbackground="#A9A9A9",
-    othermonthwebackground="#696969",
-    othermonthforeground="#D3D3D3",
-    othermonthweforeground="#A9A9A9",
-    selectbackground="#2E2E2E",   # Cor da seleção — rosa glam
-    selectforeground="#FFFFFF",
-    font=("Helvetica", 11, "bold"),
-    cursor="hand1",
-    style="my.TCalendar")
+cal = Calendar(window, selectmode="day", year=2025, month=11, day=4, date_pattern="dd/mm/yyyy",
+    background="#000000", disabledbackground="#A9A9A9", bordercolor="#000000", headersbackground="#FFFFFF", 
+    headersforeground="#000000", normalbackground="#FFFFFF", normalforeground="#000000", 
+    weekendbackground="#000000", weekendforeground="#FFFFFF", othermonthbackground="#A9A9A9", 
+    othermonthwebackground="#696969", othermonthforeground="#D3D3D3", othermonthweforeground="#A9A9A9", 
+    selectbackground="#2E2E2E", selectforeground="#FFFFFF", font=("Helvetica", 11, "bold"), cursor="hand1", style="my.TCalendar")
 cal.grid(row=1, column=0, padx=20, pady=10, sticky="n")
 
 btn_data = tk.Button(window, text="Selecionar Data", command=showDate, font=("Arial", 12))
@@ -79,20 +113,6 @@ btn_data.config(state="disabled")
 
 label_data = tk.Label(window, text="", bg="#FFFFFF", font=("Arial", 14))
 label_data.grid(row=3, column=0, pady=5)
-
-#estilizando o Calendário
-style = ttk.Style(window)
-style.theme_use("clam")
-
-style.configure("my.TCalendar",
-                background="#282A36",  # Fundo principal
-                foreground="#F8F8F2",  # Texto principal
-                fieldbackground="#282A36",
-                bordercolor="#44475A",
-                lightcolor="#44475A",
-                darkcolor="#44475A",
-                arrowcolor="#BD93F9")  # Roxo sutil nas setas
-
 
 # --- FRAME: Painel de Eventos ---
 frame_eventos = tk.Frame(window, bg="#F8F8F8", bd=3, relief="groove", padx=20, pady=20)
@@ -108,21 +128,39 @@ eventName.grid(row=1, column=0, pady=5)
 botao = tk.Button(frame_eventos, text="Registrar", width=20, height=2, font=("Arial", 14), command= registrar_nome)
 botao.grid(row=2, column=0, pady=15)
 
+# Removendo o botão "Editar" de onde ele estava
 edit_btn = tk.Button(frame_eventos, text="Editar", width=10, height=1, font=("Arial", 14))
-edit_btn.grid(row=2, column=1) #Programar para aparecer na mesma linha que os termos da lista
+# edit_btn.grid(row=2, column=1) # Desabilitado por enquanto
 
 label3 = tk.Label(frame_eventos, text="Eventos Registrados:", bg="#F8F8F8", fg='black', font=("Arial", 18, "bold"))
-label3.grid(row=3, column=0, pady=(10,5))
+label3.grid(row=3, column=0, columnspan=3, pady=(10,5), sticky="w") # Sticky W para alinhar à esquerda
 
-lista_eventos = tk.Listbox(frame_eventos, width=20, height=10, font=("Arial", 14))
-lista_eventos.grid(row=4, column=0, pady=5, sticky="w")
+# --- IMPLEMENTAÇÃO DO TREEVIEW ---
+columns = ('id', 'nome', 'data', 'acoes') 
+tree = ttk.Treeview(frame_eventos, 
+                    columns=columns, 
+                    show='headings', 
+                    height=10)
 
-lista_datas = tk.Listbox(frame_eventos, width=20, height=10, font=("Arial", 14))
-lista_datas.grid(row=4, column=1, padx=0)
+# Configurando os Cabeçalhos
+tree.heading('id', text='ID')
+tree.heading('nome', text='Nome do Evento')
+tree.heading('data', text='Data')
+tree.heading('acoes', text='') # Coluna para os botões
 
-lista_edit = tk.Listbox(frame_eventos, width=10, height=10, font=("Arial", 14))
-lista_edit.grid(row=4, column=2)
+# Configurando as Larguras
+tree.column('id', width=40, anchor='center', stretch=tk.NO)
+tree.column('nome', width=180, anchor='w')
+tree.column('data', width=100, anchor='center')
+tree.column('acoes', width=80, anchor='center', stretch=tk.NO) 
 
+# Posicionamento do Treeview
+tree.grid(row=4, column=0, columnspan=3, pady=5, sticky="ew")
+
+# Adicionando uma Scrollbar para melhorar o uso
+scrollbar = ttk.Scrollbar(frame_eventos, orient=tk.VERTICAL, command=tree.yview)
+tree.configure(yscrollcommand=scrollbar.set)
+scrollbar.grid(row=4, column=3, sticky='ns')
 
 # --- Rodapé ---
 assinatura = tk.Label(window, text="Design assinado por Gus <3", bg="#FFFFFF", fg="#777777", font=("Arial", 10))
