@@ -1,5 +1,5 @@
 eventos = []
-
+event= open("eventos.txt","w", encoding='utf-8')
 def criar_evento(eventos):
     evento = input("\nDigite o nome do evento: ")
     return eventos.append(evento)
@@ -42,5 +42,6 @@ while(cont != "n"):
     cont = input("\nDeseja continuar a operação? [s / n] ")
 
 print(eventos)
-
+event.write(f"Tarefas dos eventos:\n {eventos} ")
+event.close()
 #---Espaço de edição de funções do main---
