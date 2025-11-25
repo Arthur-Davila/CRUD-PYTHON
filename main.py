@@ -71,6 +71,38 @@ def showDate():
     window.temp_event_name = None # Limpa o nome temporário
     botao.config(state="normal")
 
+def save_edit():
+    global botao
+    nome_editado = eventName.get().strip()
+    data_editada = cal.get_date()
+
+    if nome_editado:
+        btn_data.config(state="normal")
+        tree.item(tree.selection()[0], values=(tree.item(tree.selection()[0], 'values')[0], nome_editado, data_editada, ''))
+        btn_data.config(text="Selecionar Data", command=showDate, state="disabled")
+        botao.config(text="Registrar", command= registrar_nome)
+        eventName.delete(0, tk.END)
+        edit_btn.config(state="normal")
+
+
+def edit_evento():
+    if tree.selection():
+        edit_btn.config(state="disabled")
+        selected_item = tree.selection()[0]
+        item_values = tree.item(selected_item, 'values')
+        event_id = int(item_values[0])
+        eventName.insert(0, tree.item(selected_item, 'values')[1])   # Preenche o campo com o nome atual
+        
+        botao.config(text="Salvar Edição", command = save_edit)
+        btn_data.config(text="Nova Data", command = save_edit, state="disabled")
+        for record in records:
+            if record['id'] == event_id:
+                new_name = eventName.get().strip()
+                if new_name:
+                    record['nome'] = new_name
+                    update_event_treeview()
+                break
+
 # --- FUNÇÕES DE ESTILOS (Para o design da tabela) ---
 
 style = ttk.Style(window)
@@ -129,8 +161,9 @@ botao = tk.Button(frame_eventos, text="Registrar", width=20, height=2, font=("Ar
 botao.grid(row=2, column=0, pady=15)
 
 # Removendo o botão "Editar" de onde ele estava
-edit_btn = tk.Button(frame_eventos, text="Editar", width=10, height=1, font=("Arial", 14))
-# edit_btn.grid(row=2, column=1) # Desabilitado por enquanto
+edit_btn = tk.Button(frame_eventos, text="Editar", width=10, height=1, font=("Arial", 14), command= edit_evento)
+edit_btn.grid(row=2, column=1) # Desabilitado por enquanto
+edit_btn.config(state="normal")
 
 label3 = tk.Label(frame_eventos, text="Eventos Registrados:", bg="#F8F8F8", fg='black', font=("Arial", 18, "bold"))
 label3.grid(row=3, column=0, columnspan=3, pady=(10,5), sticky="w") # Sticky W para alinhar à esquerda

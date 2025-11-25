@@ -44,4 +44,37 @@ while(cont != "n"):
 print(eventos)
 event.write(f"Tarefas dos eventos:\n {eventos} ")
 event.close()
+
+def save_edit():
+    global botao
+    nome_editado = eventName.get().strip()
+    data_editada = cal.get_date()
+
+    if nome_editado:
+        btn_data.config(state="normal")
+        tree.item(tree.selection()[0], values=(tree.item(tree.selection()[0], 'values')[0], nome_editado, data_editada, ''))
+        btn_data.config(text="Selecionar Data", command=showDate, state="disabled")
+        botao.config(text="Registrar", command= registrar_nome)
+        eventName.delete(0, tk.END)
+        edit_btn.config(state="normal")
+
+
+def edit_evento():
+    if tree.selection():
+        edit_btn.config(state="disabled")
+        selected_item = tree.selection()[0]
+        item_values = tree.item(selected_item, 'values')
+        event_id = int(item_values[0])
+        eventName.insert(0, tree.item(selected_item, 'values')[1])   # Preenche o campo com o nome atual
+        
+        botao.config(text="Salvar Edição", command = save_edit)
+        btn_data.config(text="Nova Data", command = save_edit, state="disabled")
+        for record in records:
+            if record['id'] == event_id:
+                new_name = eventName.get().strip()
+                if new_name:
+                    record['nome'] = new_name
+                    update_event_treeview()
+                break
+
 #---Espaço de edição de funções do main---
