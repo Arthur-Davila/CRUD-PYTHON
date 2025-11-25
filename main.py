@@ -1,203 +1,315 @@
-import os
-os.system('cls')
 import tkinter as tk
-from tkcalendar import Calendar
 from tkinter import ttk
+from tkcalendar import Calendar
+from datetime import datetime
 
-# --- ESTRUTURA DE DADOS UNIFICADA ---
-records = [] # Lista principal que armazena dicionários: [{'id': 1, 'nome': '...', 'data': '...'}]
-next_id = 1 
-# --- FIM ESTRUTURA DE DADOS UNIFICADA ---
+BG = "#F7F7FC"
+CARD = "white"
+ACC = "#6C5CE7"
+DEL = "#FF6B6B"
 
-# Configuração da Janela (Permanece a mesma)
-window = tk.Tk()
-window.configure(bg="#FFFFFF")
-window.title("FazAí - Agenda")
-window.geometry("1280x720")
-window.columnconfigure(0, weight=1)
-window.columnconfigure(1, weight=1)
+eventos = []
+prox_id = 1
 
-# Variável para armazenar o nome temporariamente
-window.temp_event_name = None 
+def salvar_arquivo():
+    with open("eventos.txt", "w", encoding="utf-8") as arquivo:
+        arquivo.write("--- Eventos, Datas e Tarefas ---\n")
+        for evento in eventos:
+            arquivo.write(f"{evento['nome']} ({evento['data']}) - Orçamento: R$ {evento['orcamento']:.2f}\n")
+            for tarefa in evento['tarefas']:
+                arquivo.write(f"   Tarefa: {tarefa['nome']} - Valor: R$ {tarefa['valor']:.2f}\n")
+            dias_restantes = (datetime.strptime(evento["data"], "%d/%m/%Y") - datetime.now()).days
+            if dias_restantes < 0:
+                arquivo.write("   Evento já ocorreu.\n")
+            elif dias_restantes == 0:
+                arquivo.write("   Evento acontece hoje!\n")
+            else:
+                arquivo.write(f"   Faltam {dias_restantes} dias.\n")
+            arquivo.write("\n")
 
-# --- FUNÇÕES CORE (CREATE / READ) ---
+def checar_easter_egg():
+    if len(eventos) == 10:
+        janela_egg = tk.Toplevel()
+        janela_egg.title("🎉 Easter Egg 🎉")
+        janela_egg.geometry("1000x800")
+        janela_egg.configure(bg="white")
+        tk.Label(janela_egg, text="\n\n\n🎂 Parabéns, este é o décimo evento! 🎂", bg=BG, font=("Arial", 14)).pack(pady=10)
+        mensagem = """
+                              ██████                              
+              ████████      ██                            
+            ██░░░░██        ██████                        
+          ██░░░░██        ██████████                      
+        ██░░░░░░██      ██████████████                    
+    ████░░░░░░████      ██████████████                    
+  ██░░░░░░░░██████      ██████████████████                
+  ██░░░░░░████████        ████████████████████            
+  ██░░░░██████████          ████████████████████████      
+██░░░░██████████████      ██████████████████████████████  
+██░░░░████████████████████████████████████████████████████
+██░░░░████████████████████████████████████████████████████
+  ██░░████████████████████████████████████████████████████
+  ██░░░░██████░░░░██████░░░░██████░░░░██████░░░░██████░░██
+  ██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░██
+    ██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░██
+    ██░░░░░░░░░░░░████░░░░░░░░░░░░░░░░░░████░░░░░░░░░░░░██
+    ██░░░░░░░░░░██  ████░░░░░░░░░░░░░░██  ████░░░░░░░░░░██
+    ██░░░░░░░░░░████████░░░░██░░██░░░░████████░░░░░░░░░░██
+      ██░░░░░░░░░░████░░░░░░░░██░░░░░░░░████░░░░░░░░░░░░██
+        ██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░██
+        ██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░██
+          ████████████████████████████████████████████████
+        """
+        tk.Label(janela_egg, text=mensagem, font=("Courier", 12), bg="white", justify="center").pack(expand=True)
 
-def update_event_treeview():
-    """Limpa e preenche o Treeview com os dados de 'records'."""
-    # 1. Limpar registros existentes
-    for iid in tree.get_children():
-        tree.delete(iid)
+def atualizar_eventos():
+    tabela_eventos.delete(*tabela_eventos.get_children())
+    for evento in eventos:
+        dias_restantes = (datetime.strptime(evento["data"], "%d/%m/%Y") - datetime.now()).days
+        tabela_eventos.insert("", tk.END, values=(
+            evento["id"], evento["nome"], evento["tipo"], 
+            evento["data"], evento["local"], f"{evento['orcamento']:.2f}", dias_restantes
+        ))
+    atualizar_combo_eventos()
+    atualizar_tarefas()
+    salvar_arquivo()
+    checar_easter_egg()
+
+def limpar_formulario():
+    entrada_nome.delete(0, tk.END)
+    tipo_var.set("")
+    entrada_local.delete(0, tk.END)
+    entrada_orcamento.delete(0, tk.END)
+
+def obter_evento_selecionado():
+    selecao = tabela_eventos.selection()
+    if not selecao: return None
+    id_evento = int(tabela_eventos.item(selecao[0])["values"][0])
+    for evento in eventos:
+        if evento["id"] == id_evento:
+            return evento
+
+def adicionar_evento():
+    global prox_id
+    nome = entrada_nome.get().strip()
+    tipo = tipo_var.get().strip()
+    data = calendario.get_date()
+    local = entrada_local.get().strip()
+    try:
+        orcamento = float(entrada_orcamento.get().strip())
+    except:
+        return
     
-    # 2. Inserir os novos registros
-    for record in records:
-        # A ordem deve ser: 'id', 'nome', 'data', 'ações'
-        tree.insert('', tk.END, values=(record['id'], record['nome'], record['data'], ''))
-
-def registrar_nome():
-    """Valida o nome do evento e libera a seleção da data."""
-    global window
-    nome = eventName.get().strip()
-    if nome:
-        window.temp_event_name = nome # Armazena o nome
-        btn_data.config(state="normal")
-        botao.config(state="disabled") # Desativa o Registrar até a data ser escolhida
-    # Não há necessidade de 'eventList.append(nome)' nem 'lista_eventos.insert()' aqui.
-
-def showDate():
-    """Registra o evento completo (Nome + Data) e atualiza o Treeview."""
-    global next_id, window
-    
-    if window.temp_event_name is None:
-        # Garante que o nome foi registrado antes
-        return 
-
-    btn_data.config(state="disabled")
-    selectedDate = cal.get_date()
-    
-    # Cria o novo registro unificado
-    new_record = {
-        'id': next_id,
-        'nome': window.temp_event_name,
-        'data': selectedDate
-    }
-    records.append(new_record)
-    next_id += 1
-    
-    # Atualiza a interface
-    eventName.delete(0, tk.END)
-    update_event_treeview() # Chama a função de preenchimento do Treeview
-    
-    label_data.config(text=f"Data selecionada: {selectedDate}")
-    window.temp_event_name = None # Limpa o nome temporário
-    botao.config(state="normal")
-
-def save_edit():
-    global botao
-    nome_editado = eventName.get().strip()
-    data_editada = cal.get_date()
-
-    if nome_editado:
-        btn_data.config(state="normal")
-        tree.item(tree.selection()[0], values=(tree.item(tree.selection()[0], 'values')[0], nome_editado, data_editada, ''))
-        btn_data.config(text="Selecionar Data", command=showDate, state="disabled")
-        botao.config(text="Registrar", command= registrar_nome)
-        eventName.delete(0, tk.END)
-        edit_btn.config(state="normal")
-
-
-def edit_evento():
-    if tree.selection():
-        edit_btn.config(state="disabled")
-        selected_item = tree.selection()[0]
-        item_values = tree.item(selected_item, 'values')
-        event_id = int(item_values[0])
-        eventName.insert(0, tree.item(selected_item, 'values')[1])   # Preenche o campo com o nome atual
+    if not nome or not tipo or not local:
+        return
         
-        botao.config(text="Salvar Edição", command = save_edit)
-        btn_data.config(text="Nova Data", command = save_edit, state="disabled")
-        for record in records:
-            if record['id'] == event_id:
-                new_name = eventName.get().strip()
-                if new_name:
-                    record['nome'] = new_name
-                    update_event_treeview()
-                break
+    eventos.append({
+        "id": prox_id, "nome": nome, "tipo": tipo, 
+        "data": data, "local": local, "orcamento": orcamento, "tarefas": []
+    })
+    prox_id += 1
+    limpar_formulario()
+    atualizar_eventos()
 
-# --- FUNÇÕES DE ESTILOS (Para o design da tabela) ---
+def excluir_evento():
+    evento = obter_evento_selecionado()
+    if evento:
+        eventos.remove(evento)
+        atualizar_eventos()
 
-style = ttk.Style(window)
-style.theme_use("clam")
+def editar_evento():
+    evento = obter_evento_selecionado()
+    if evento:
+        entrada_nome.delete(0, tk.END)
+        entrada_nome.insert(0, evento["nome"])
+        tipo_var.set(evento["tipo"])
+        calendario.selection_set(evento["data"])
+        entrada_local.delete(0, tk.END)
+        entrada_local.insert(0, evento["local"])
+        entrada_orcamento.delete(0, tk.END)
+        entrada_orcamento.insert(0, str(evento["orcamento"]))
+        btn_adicionar_evento.config(text="Salvar", command=lambda: salvar_edicao(evento))
 
-# Configuração de Estilos para o Calendário (mantido)
-style.configure("my.TCalendar",
-                background="#282A36", 
-                foreground="#F8F8F2", 
-                fieldbackground="#282A36",
-                bordercolor="#44475A",
-                lightcolor="#44475A",
-                darkcolor="#44475A",
-                arrowcolor="#BD93F9")
+def salvar_edicao(evento):
+    evento["nome"] = entrada_nome.get().strip()
+    evento["tipo"] = tipo_var.get().strip()
+    evento["data"] = calendario.get_date()
+    evento["local"] = entrada_local.get().strip()
+    try:
+        evento["orcamento"] = float(entrada_orcamento.get().strip())
+    except:
+        return
+    limpar_formulario()
+    btn_adicionar_evento.config(text="Adicionar Evento", command=adicionar_evento)
+    atualizar_eventos()
 
-# Configuração de Estilos para o Treeview
-style.configure("Treeview.Heading", 
-                font=("Arial", 10, "bold"),
-                background="#F0F0F0") 
-style.configure("Treeview",
-                rowheight=25,
-                fieldbackground='#FFFFFF') 
+def atualizar_combo_eventos():
+    combo_eventos['values'] = [f"{evento['id']}-{evento['nome']}" for evento in eventos]
+    if combo_eventos.get() not in combo_eventos['values']:
+        combo_eventos.set("")
 
+def atualizar_tarefas():
+    tabela_tarefas.delete(*tabela_tarefas.get_children())
+    selecao = combo_eventos.get()
+    if selecao:
+        id_evento = int(selecao.split("-")[0])
+        evento = next((x for x in eventos if x["id"]==id_evento), None)
+        if evento:
+            orcamento_disponivel = evento["orcamento"] - sum(t["valor"] for t in evento["tarefas"])
+            label_orcamento.config(text=f"Orçamento disponível: R$ {orcamento_disponivel:.2f}")
+            for tarefa in evento["tarefas"]:
+                tabela_tarefas.insert("", tk.END, values=(tarefa["nome"], f"{tarefa['valor']:.2f}"))
 
-# --- Título, Calendário e Botões de Data (Mantidos) ---
-label1 = tk.Label(window, text="FazAí", bg="#FFFFFF", fg='black', font=("Arial", 48))
-label1.grid(row=0, column=0, columnspan=2, pady=20)
+def adicionar_tarefa():
+    selecao = combo_eventos.get()
+    if not selecao: return
+    id_evento = int(selecao.split("-")[0])
+    evento = next((x for x in eventos if x["id"]==id_evento), None)
+    if evento:
+        nome = entrada_tarefa.get().strip()
+        try:
+            valor = float(entrada_valor_tarefa.get().strip())
+        except:
+            return
+        orcamento_disponivel = evento["orcamento"] - sum(t["valor"] for t in evento["tarefas"])
+        if valor > orcamento_disponivel: return
+        evento["tarefas"].append({"nome": nome, "valor": valor})
+        entrada_tarefa.delete(0, tk.END)
+        entrada_valor_tarefa.delete(0, tk.END)
+        atualizar_tarefas()
+        atualizar_eventos()
 
-cal = Calendar(window, selectmode="day", year=2025, month=11, day=4, date_pattern="dd/mm/yyyy",
-    background="#000000", disabledbackground="#A9A9A9", bordercolor="#000000", headersbackground="#FFFFFF", 
-    headersforeground="#000000", normalbackground="#FFFFFF", normalforeground="#000000", 
-    weekendbackground="#000000", weekendforeground="#FFFFFF", othermonthbackground="#A9A9A9", 
-    othermonthwebackground="#696969", othermonthforeground="#D3D3D3", othermonthweforeground="#A9A9A9", 
-    selectbackground="#2E2E2E", selectforeground="#FFFFFF", font=("Helvetica", 11, "bold"), cursor="hand1", style="my.TCalendar")
-cal.grid(row=1, column=0, padx=20, pady=10, sticky="n")
+def excluir_tarefa():
+    selecao_evento = combo_eventos.get()
+    selecao_tarefa = tabela_tarefas.selection()
+    if not selecao_evento or not selecao_tarefa: return
+    id_evento = int(selecao_evento.split("-")[0])
+    evento = next((x for x in eventos if x["id"]==id_evento), None)
+    if evento:
+        nome_tarefa = tabela_tarefas.item(selecao_tarefa[0])["values"][0]
+        tarefa = next((x for x in evento["tarefas"] if x["nome"]==nome_tarefa), None)
+        if tarefa:
+            evento["tarefas"].remove(tarefa)
+            atualizar_tarefas()
+            atualizar_eventos()
 
-btn_data = tk.Button(window, text="Selecionar Data", command=showDate, font=("Arial", 12))
-btn_data.grid(row=2, column=0, pady=5)
-btn_data.config(state="disabled")
+def editar_tarefa():
+    selecao_evento = combo_eventos.get()
+    selecao_tarefa = tabela_tarefas.selection()
+    if not selecao_evento or not selecao_tarefa: return
+    id_evento = int(selecao_evento.split("-")[0])
+    evento = next((x for x in eventos if x["id"]==id_evento), None)
+    if evento:
+        nome_tarefa = tabela_tarefas.item(selecao_tarefa[0])["values"][0]
+        tarefa = next((x for x in evento["tarefas"] if x["nome"]==nome_tarefa), None)
+        if tarefa:
+            entrada_tarefa.delete(0, tk.END)
+            entrada_tarefa.insert(0, tarefa["nome"])
+            entrada_valor_tarefa.delete(0, tk.END)
+            entrada_valor_tarefa.insert(0, str(tarefa["valor"]))
+            btn_adicionar_tarefa.config(text="Salvar", command=lambda: salvar_tarefa(tarefa, evento))
 
-label_data = tk.Label(window, text="", bg="#FFFFFF", font=("Arial", 14))
-label_data.grid(row=3, column=0, pady=5)
+def salvar_tarefa(tarefa, evento):
+    tarefa["nome"] = entrada_tarefa.get().strip()
+    try:
+        tarefa["valor"] = float(entrada_valor_tarefa.get().strip())
+    except:
+        return
+    entrada_tarefa.delete(0, tk.END)
+    entrada_valor_tarefa.delete(0, tk.END)
+    btn_adicionar_tarefa.config(text="Adicionar Tarefa", command=adicionar_tarefa)
+    atualizar_tarefas()
+    atualizar_eventos()
 
-# --- FRAME: Painel de Eventos ---
-frame_eventos = tk.Frame(window, bg="#F8F8F8", bd=3, relief="groove", padx=20, pady=20)
-frame_eventos.grid(row=1, column=1, rowspan=4, padx=40, pady=20, sticky="n")
+janela = tk.Tk()
+janela.title("Agenda Simples")
+janela.geometry("950x500")
+janela.configure(bg=BG)
 
-# Widgets dentro do frame
-label2 = tk.Label(frame_eventos, text="Nome do evento:", bg="#F8F8F8", fg='black', font=("Arial", 20))
-label2.grid(row=0, column=0, sticky="w", pady=(0,10))
+abas = ttk.Notebook(janela)
+abas.pack(fill="both", expand=True)
 
-eventName = tk.Entry(frame_eventos, fg='black', font=("Arial", 18), width=25)
-eventName.grid(row=1, column=0, pady=5)
+aba_eventos = tk.Frame(abas, bg=BG)
+abas.add(aba_eventos, text="Eventos")
 
-botao = tk.Button(frame_eventos, text="Registrar", width=20, height=2, font=("Arial", 14), command= registrar_nome)
-botao.grid(row=2, column=0, pady=15)
+frame_formulario = tk.Frame(aba_eventos, bg=CARD, padx=10, pady=10)
+frame_formulario.pack(side="left", fill="y")
 
-# Removendo o botão "Editar" de onde ele estava
-edit_btn = tk.Button(frame_eventos, text="Editar", width=10, height=1, font=("Arial", 14), command= edit_evento)
-edit_btn.grid(row=2, column=1) # Desabilitado por enquanto
-edit_btn.config(state="normal")
+tk.Label(frame_formulario, text="Nome:", bg=CARD).pack(anchor="w")
+entrada_nome = tk.Entry(frame_formulario)
+entrada_nome.pack(fill="x", pady=2)
 
-label3 = tk.Label(frame_eventos, text="Eventos Registrados:", bg="#F8F8F8", fg='black', font=("Arial", 18, "bold"))
-label3.grid(row=3, column=0, columnspan=3, pady=(10,5), sticky="w") # Sticky W para alinhar à esquerda
+tk.Label(frame_formulario, text="Tipo:", bg=CARD).pack(anchor="w")
+tipo_var = tk.StringVar()
+combo_tipo = ttk.Combobox(frame_formulario, textvariable=tipo_var, values=["Aniversário","Casamento","Reunião"])
+combo_tipo.pack(fill="x", pady=2)
 
-# --- IMPLEMENTAÇÃO DO TREEVIEW ---
-columns = ('id', 'nome', 'data', 'acoes') 
-tree = ttk.Treeview(frame_eventos, 
-                    columns=columns, 
-                    show='headings', 
-                    height=10)
+tk.Label(frame_formulario, text="Data:", bg=CARD).pack(anchor="w")
+calendario = Calendar(frame_formulario, date_pattern="dd/mm/yyyy")
+calendario.pack(pady=2)
 
-# Configurando os Cabeçalhos
-tree.heading('id', text='ID')
-tree.heading('nome', text='Nome do Evento')
-tree.heading('data', text='Data')
-tree.heading('acoes', text='') # Coluna para os botões
+tk.Label(frame_formulario, text="Local:", bg=CARD).pack(anchor="w")
+entrada_local = tk.Entry(frame_formulario)
+entrada_local.pack(fill="x", pady=2)
 
-# Configurando as Larguras
-tree.column('id', width=40, anchor='center', stretch=tk.NO)
-tree.column('nome', width=180, anchor='w')
-tree.column('data', width=100, anchor='center')
-tree.column('acoes', width=80, anchor='center', stretch=tk.NO) 
+tk.Label(frame_formulario, text="Orçamento:", bg=CARD).pack(anchor="w")
+entrada_orcamento = tk.Entry(frame_formulario)
+entrada_orcamento.pack(fill="x", pady=2)
 
-# Posicionamento do Treeview
-tree.grid(row=4, column=0, columnspan=3, pady=5, sticky="ew")
+frame_botoes = tk.Frame(aba_eventos, bg=CARD)
+frame_botoes.pack(side="left", fill="y", padx=5, pady=10)
 
-# Adicionando uma Scrollbar para melhorar o uso
-scrollbar = ttk.Scrollbar(frame_eventos, orient=tk.VERTICAL, command=tree.yview)
-tree.configure(yscrollcommand=scrollbar.set)
-scrollbar.grid(row=4, column=3, sticky='ns')
+btn_adicionar_evento = tk.Button(frame_botoes, text="Adicionar Evento", bg=ACC, fg="white", command=adicionar_evento)
+btn_adicionar_evento.pack(fill="x", pady=2)
+tk.Button(frame_botoes, text="Editar Selecionado", bg=ACC, fg="white", command=editar_evento).pack(fill="x", pady=2)
+tk.Button(frame_botoes, text="Excluir Selecionado", bg=DEL, fg="white", command=excluir_evento).pack(fill="x", pady=2)
 
-# --- Rodapé ---
-assinatura = tk.Label(window, text="Design assinado por Gus <3", bg="#FFFFFF", fg="#777777", font=("Arial", 10))
-assinatura.grid(row=6, column=0, columnspan=2, pady=10)
+tabela_eventos = ttk.Treeview(aba_eventos, columns=("id","nome","tipo","data","local","orcamento","dias"), show="headings")
+colunas = ["id","nome","tipo","data","local","orcamento","dias"]
+titulos = ["ID","Nome","Tipo","Data","Local","Orc","Dias"]
+for col, tit in zip(colunas, titulos):
+    tabela_eventos.heading(col, text=tit)
+tabela_eventos.column("id", width=50, anchor="center")
+tabela_eventos.column("nome", width=150, anchor="w")
+tabela_eventos.column("tipo", width=100, anchor="center")
+tabela_eventos.column("data", width=100, anchor="center")
+tabela_eventos.column("local", width=120, anchor="w")
+tabela_eventos.column("orcamento", width=80, anchor="e")
+tabela_eventos.column("dias", width=80, anchor="center")
+tabela_eventos.pack(side="left", fill="both", expand=True, padx=5, pady=5)
 
-# Resultado Final
-window.mainloop()
+aba_tarefas = tk.Frame(abas, bg=BG)
+abas.add(aba_tarefas, text="Tarefas")
+
+frame_tarefas = tk.Frame(aba_tarefas, bg=CARD, padx=10, pady=10)
+frame_tarefas.pack(side="left", fill="y")
+
+tk.Label(frame_tarefas, text="Evento:", bg=CARD).pack(anchor="w")
+combo_eventos = ttk.Combobox(frame_tarefas)
+combo_eventos.pack(fill="x", pady=2)
+
+tk.Label(frame_tarefas, text="Tarefa:", bg=CARD).pack(anchor="w")
+entrada_tarefa = tk.Entry(frame_tarefas)
+entrada_tarefa.pack(fill="x", pady=2)
+
+tk.Label(frame_tarefas, text="Valor:", bg=CARD).pack(anchor="w")
+entrada_valor_tarefa = tk.Entry(frame_tarefas)
+entrada_valor_tarefa.pack(fill="x", pady=2)
+
+btn_adicionar_tarefa = tk.Button(frame_tarefas, text="Adicionar Tarefa", bg=ACC, fg="white", command=adicionar_tarefa)
+btn_adicionar_tarefa.pack(fill="x", pady=2)
+tk.Button(frame_tarefas, text="Editar Selecionado", bg=ACC, fg="white", command=editar_tarefa).pack(fill="x", pady=2)
+tk.Button(frame_tarefas, text="Excluir Selecionado", bg=DEL, fg="white", command=excluir_tarefa).pack(fill="x", pady=2)
+
+label_orcamento = tk.Label(frame_tarefas, text="Orçamento disponível: R$ 0.00", bg=CARD)
+label_orcamento.pack(pady=5)
+
+tabela_tarefas = ttk.Treeview(aba_tarefas, columns=("nome","valor"), show="headings")
+tabela_tarefas.heading("nome", text="Tarefa")
+tabela_tarefas.heading("valor", text="Valor (R$)")
+tabela_tarefas.column("nome", width=150, anchor="w")
+tabela_tarefas.column("valor", width=80, anchor="e")
+tabela_tarefas.pack(side="left", fill="both", expand=True, padx=5, pady=5)
+
+combo_eventos.bind("<<ComboboxSelected>>", lambda e: atualizar_tarefas())
+
+janela.mainloop()
