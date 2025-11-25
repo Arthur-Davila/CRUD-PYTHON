@@ -1,2 +1,4 @@
---- Eventos e Datas ---
-O evento 1 já ocorreu na data 25/11/2025
+--- Eventos, Datas e Tarefas ---
+teste (27/11/2025) - Orçamento: R$ 1.00
+   Faltam 1 dias.
+

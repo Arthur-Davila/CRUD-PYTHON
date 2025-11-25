@@ -15,7 +15,7 @@ def salvar_arquivo():
     with open("eventos.txt", "w", encoding="utf-8") as arquivo:
         arquivo.write("--- Eventos, Datas e Tarefas ---\n")
         for evento in eventos:
-            arquivo.write(f"{evento['nome']} ({evento['data']}) - Orçamento: R$ {evento['orcamento']:.2f}\n")
+            arquivo.write(f"{evento['nome']} ({evento['data']}) ({evento['tipo']}) - Orçamento: R$ {evento['orcamento']:.2f}\n")
             for tarefa in evento['tarefas']:
                 arquivo.write(f"   Tarefa: {tarefa['nome']} - Valor: R$ {tarefa['valor']:.2f}\n")
             dias_restantes = (datetime.strptime(evento["data"], "%d/%m/%Y") - datetime.now()).days
